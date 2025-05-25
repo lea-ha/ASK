@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import "./App.css";
 
 // Use different URLs for development vs production
@@ -134,7 +135,11 @@ function App() {
             <div className="chat-messages">
               {chatMessages.map((message, index) => (
                 <div key={index} className={`message ${message.role}`}>
-                  {message.content}
+                  {message.role === "assistant" ? (
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  ) : (
+                    message.content
+                  )}
                 </div>
               ))}
               {isLoading && <div className="loading">Thinking...</div>}
