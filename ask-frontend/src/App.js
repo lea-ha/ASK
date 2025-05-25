@@ -1,11 +1,28 @@
-import { useState } from 'react';
-import './App.css';
+import { useState } from "react";
+import "./App.css";
 
-const serverUrl = 'http://127.0.0.1:5000/api';
+// Use different URLs for development vs production
+const getServerUrl = () => {
+  const hostname = window.location.hostname;
+
+  // Check if we're in Replit environment
+  if (hostname.includes(".replit.dev") || hostname.includes(".repl.co")) {
+    // Try different port configurations for Replit
+    const baseUrl = `${window.location.protocol}//${hostname}`;
+
+    // First try with port 5000 (if exposeLocalhost works)
+    return `${baseUrl}:5000/api`;
+  }
+
+  // Local development
+  return "http://localhost:5000/api";
+};
+
+const serverUrl = getServerUrl();
 
 function App() {
   const [chatMessages, setChatMessages] = useState([]);
-  const [currentQuestion, setCurrentQuestion] = useState('');
+  const [currentQuestion, setCurrentQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
@@ -13,7 +30,7 @@ function App() {
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) {
-      setError('Please select a PDF file to upload.');
+      setError("Please select a PDF file to upload.");
       return;
     }
 
@@ -22,25 +39,28 @@ function App() {
     setChatMessages([]); // Clear chat when new document is uploaded
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
       const response = await fetch(`${serverUrl}/analyze_pdf`, {
-        method: 'POST',
-        body: formData
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to analyze PDF');
+        throw new Error("Failed to analyze PDF");
       }
 
       const data = await response.json();
       setSessionId(data.session_id);
+
       // Add initial message about document upload
-      setChatMessages([{
-        role: 'assistant',
-        content: `I've analyzed your document "${file.name}". You can now ask me questions about it!`
-      }]);
+      setChatMessages([
+        {
+          role: "assistant",
+          content: `I've analyzed your document "${file.name}". You can now ask me questions about it!`,
+        },
+      ]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,27 +74,33 @@ function App() {
 
     setIsLoading(true);
     const userMessage = currentQuestion.trim();
-    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    setCurrentQuestion('');
+    setChatMessages((prev) => [
+      ...prev,
+      { role: "user", content: userMessage },
+    ]);
+    setCurrentQuestion("");
 
     try {
       const response = await fetch(`${serverUrl}/chat`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           session_id: sessionId,
-          question: userMessage
-        })
+          question: userMessage,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from chatbot');
+        throw new Error("Failed to get response from chatbot");
       }
 
       const data = await response.json();
-      setChatMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer },
+      ]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -86,13 +112,13 @@ function App() {
     <div className="App">
       <div className="container">
         <h1>ASK - Chat with Your Document</h1>
-        
+
         {!sessionId && (
           <div className="upload-section">
             <h2>Upload a PDF to start chatting</h2>
-            <input 
-              type="file" 
-              id="pdf-file" 
+            <input
+              type="file"
+              id="pdf-file"
               accept=".pdf"
               onChange={handleFileUpload}
               disabled={isLoading}
@@ -101,7 +127,6 @@ function App() {
         )}
 
         {error && <div className="error-message">{error}</div>}
-        
         {isLoading && <div className="loading">Processing...</div>}
 
         {sessionId && (
@@ -114,6 +139,7 @@ function App() {
               ))}
               {isLoading && <div className="loading">Thinking...</div>}
             </div>
+
             <form onSubmit={handleChatSubmit} className="chat-input-form">
               <input
                 type="text"
@@ -122,7 +148,9 @@ function App() {
                 placeholder="Ask a question about the document..."
                 disabled={isLoading}
               />
-              <button type="submit" disabled={isLoading}>Send</button>
+              <button type="submit" disabled={isLoading}>
+                Send
+              </button>
             </form>
           </div>
         )}

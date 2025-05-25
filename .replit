@@ -1,0 +1,17 @@
+modules = ["python-3.12", "nodejs-20"]
+run = "bash start.sh"
+
+[nix]
+channel = "stable-24_05"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
+exposeLocalhost = true
+
+[env]
+PYTHONPATH = "$REPL_HOME/ask-backend"
